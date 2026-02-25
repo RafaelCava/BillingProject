@@ -1,0 +1,26 @@
+{
+  "name": "@billing-management/billingApi-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@billing-management/billingApi"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "apps/billingApi-e2e/jest.config.cts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "@billing-management/billingApi:build",
+          "@billing-management/billingApi:serve"
+        ]
+      }
+    }
+  }
+}
