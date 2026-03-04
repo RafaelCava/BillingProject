@@ -4,10 +4,10 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/billingApi-e2e"
+      "path": "./apps/billingApi"
     },
     {
-      "path": "./apps/billingApi"
+      "path": "./libs/databases"
     }
   ]
 }

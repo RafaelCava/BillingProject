@@ -1,0 +1,32 @@
+services:
+  db_mongo:
+    image: mongo:8
+    container_name: db_mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - ./tmp/mongodb:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    extra_hosts:
+      - host.docker.internal:host-gateway
+  billing_api:
+    build:
+      context: .
+      dockerfile: ./apps/billingApi/Dockerfile
+    entrypoint: ["sh", "-c", "npm install && nx serve billingApi"]
+    container_name: billing_api
+    ports:
+      - 3000:3000
+    environment:
+      MONGO_CONNECTION: "mongodb://root:example@host.docker.internal:27017/billing?authSource=admin"
+      NX_DAEMON: true
+      CHOKIDAR_USEPOLLING: true
+      CHOKIDAR_INTERVAL: 100
+    volumes:
+      - .:/app
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      - db_mongo
