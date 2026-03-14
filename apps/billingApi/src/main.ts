@@ -11,7 +11,7 @@ import { setupSwagger } from './app/swagger/swagger.config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'start' }, 'Bootstrap');
-  const allowedOrigins = (process.env.FRONTEND_URLS || 'http://localhost:4200,http://localhost:3000,http://localhost:3001')
+  const allowedOrigins = (process.env.FRONTEND_URLS || 'http://localhost:8080,http://localhost:3000,http://localhost:3001')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
