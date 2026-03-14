@@ -82,7 +82,7 @@ export class AuthService {
 
     let payload: JwtPayload;
     try {
-      payload = verify(refreshToken, refreshTokenSecret) as JwtPayload;
+      payload = verify(refreshToken, refreshTokenSecret, { issuer: process.env.JWT_ISSUER || 'billing-api' }) as JwtPayload;
       this.logger.debug({
         module: AuthService.name,
         action: 'refresh',
@@ -157,8 +157,8 @@ export class AuthService {
     const accessTokenSecret = process.env.JWT_ACCESS_SECRET || 'billing-access-secret';
     const refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'billing-refresh-secret';
 
-    const accessToken = sign(payload, accessTokenSecret, { expiresIn: '15m' });
-    const refreshToken = sign(payload, refreshTokenSecret, { expiresIn: '7d' });
+    const accessToken = sign(payload, accessTokenSecret, { expiresIn: '15m', issuer: process.env.JWT_ISSUER || 'billing-api' });
+    const refreshToken = sign(payload, refreshTokenSecret, { expiresIn: '7d', issuer: process.env.JWT_ISSUER || 'billing-api' });
 
     this.logger.debug({
       module: AuthService.name,
