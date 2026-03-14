@@ -101,6 +101,33 @@ export class UserMongoRepository {
     return safeUsers;
   }
 
+  async findByIdAndAccountWithPopulatedAccount(userId: string, accountId: string): Promise<User | null> {
+    this.logger.debug({
+      module: UserMongoRepository.name,
+      action: 'findByIdAndAccountWithPopulatedAccount',
+      phase: 'start',
+      userId,
+      accountId,
+    });
+
+    const user = await this.userModel
+      .findOne({ _id: userId, account: accountId })
+      .populate('account')
+      .lean()
+      .exec();
+
+    this.logger.debug({
+      module: UserMongoRepository.name,
+      action: 'findByIdAndAccountWithPopulatedAccount',
+      phase: 'success',
+      userId,
+      accountId,
+      found: Boolean(user),
+    });
+
+    return user ? this.sanitizeUser(user) : null;
+  }
+
   async updateRefreshTokenHash(userId: string, refreshTokenHash: string | null): Promise<void> {
     this.logger.debug({
       module: UserMongoRepository.name,

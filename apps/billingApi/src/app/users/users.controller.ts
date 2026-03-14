@@ -10,7 +10,7 @@ import {
   ApiUnauthorizedResponse,
   ApiValidationErrorResponse,
 } from '../swagger/swagger.decorators';
-import { USER_EXAMPLE } from '../swagger/swagger.examples';
+import { ACCOUNT_EXAMPLE, USER_EXAMPLE } from '../swagger/swagger.examples';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { GetUserQueryDto } from './dtos/get-user-query.dto';
 import { UsersService } from './users.service';
@@ -21,6 +21,37 @@ export class UsersController {
   private readonly logger = new Logger(UsersController.name);
 
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('/profile')
+  @UseGuards(JwtAuthGuard)
+  @Roles('admin', 'user')
+  @ApiCookieAccessAuth()
+  @ApiOperation({
+    summary: 'Retorna o perfil do usuario autenticado',
+    description: 'Busca o usuario autenticado pelo token e retorna o documento com account populado.',
+  })
+  @ApiSuccessResponse(200, 'Perfil retornado com sucesso.', {
+    ...USER_EXAMPLE,
+    account: ACCOUNT_EXAMPLE,
+  })
+  @ApiUnauthorizedResponse()
+  @ApiForbiddenResponse()
+  @ApiErrorResponse(404, 'Usuario nao encontrado.', {
+    statusCode: 404,
+    message: 'Usuario nao encontrado.',
+    error: 'Not Found',
+  })
+  async getProfile(@Req() req: { user: { sub: string; accountId: string } }) {
+    this.logger.debug({
+      module: UsersController.name,
+      action: 'getProfile',
+      phase: 'start',
+      requesterUserId: req.user.sub,
+      accountId: req.user.accountId,
+    });
+
+    return this.usersService.getProfile(req.user.sub, req.user.accountId);
+  }
 
   @Get('/user')
   @UseGuards(JwtAuthGuard)

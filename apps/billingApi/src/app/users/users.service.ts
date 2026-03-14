@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { UserMongoRepository } from '@billing-management/databases';
 import { hash } from 'bcrypt';
@@ -57,6 +58,40 @@ export class UsersService {
     });
 
     return { users };
+  }
+
+  async getProfile(userId: string, accountId: string) {
+    this.logger.debug({
+      module: UsersService.name,
+      action: 'getProfile',
+      phase: 'start',
+      userId,
+      accountId,
+    });
+
+    const user = await this.userRepository.findByIdAndAccountWithPopulatedAccount(userId, accountId);
+
+    if (!user) {
+      this.logger.debug({
+        module: UsersService.name,
+        action: 'getProfile',
+        phase: 'failure',
+        userId,
+        accountId,
+        reason: 'user_not_found',
+      });
+      throw new NotFoundException('Usuario nao encontrado.');
+    }
+
+    this.logger.debug({
+      module: UsersService.name,
+      action: 'getProfile',
+      phase: 'success',
+      userId,
+      accountId,
+    });
+
+    return user;
   }
 
   async createUser(createUserDto: CreateUserDto, accountId: string) {
