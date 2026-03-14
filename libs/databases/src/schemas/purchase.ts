@@ -26,7 +26,7 @@ export class Purchase {
   @Prop({ required: true })
   dueDate!: Date;
 
-  @Prop({ required: false, type: [SchemaTypes.ObjectId], default: [] })
+  @Prop({ required: false, type: [{ type: SchemaTypes.ObjectId, ref: 'Tag' }], default: [] })
   tagIds!: string[];
 
   createdAt!: Date;

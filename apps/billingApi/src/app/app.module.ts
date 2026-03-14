@@ -6,9 +6,10 @@ import { AuthModule } from './auth/auth.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { TagsModule } from './tags/tags.module';
+import { SwaggerDocsModule } from './swagger/swagger.module';
 
 @Module({
-  imports: [DatabasesModule, AuthModule, AccountsModule, PurchasesModule, TagsModule],
+  imports: [DatabasesModule, AuthModule, AccountsModule, PurchasesModule, TagsModule, SwaggerDocsModule],
   controllers: [UserController],
   providers: [AppService],
 })

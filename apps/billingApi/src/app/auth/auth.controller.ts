@@ -2,6 +2,7 @@ import { Body, Controller, Logger, Post, Req, Res, UseGuards } from '@nestjs/com
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
@@ -10,11 +11,17 @@ import {
   buildRefreshTokenCookieOptions,
   parseCookieHeader,
 } from './auth-cookie.util';
+import {
+  ApiCookieAccessAuth,
+  ApiErrorResponse,
+  ApiSimpleSuccessResponse,
+} from '../swagger/swagger.decorators';
 
 type CookieResponse = {
   cookie: (name: string, value: string, options: Record<string, unknown>) => void;
 };
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -22,6 +29,17 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @ApiOperation({
+    summary: 'Realiza login',
+    description: 'Autentica o usuario e grava access token e refresh token em cookies HTTP-only.',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiSimpleSuccessResponse('Login realizado com sucesso.')
+  @ApiErrorResponse(401, 'Credenciais invalidas.', {
+    statusCode: 401,
+    message: 'Credenciais inválidas.',
+    error: 'Unauthorized',
+  })
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: CookieResponse) {
     this.logger.debug({ module: AuthController.name, action: 'login', phase: 'start', email: loginDto.email });
     const tokens = await this.authService.login(loginDto.email, loginDto.password);
@@ -39,6 +57,16 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @ApiOperation({
+    summary: 'Renova tokens da sessao',
+    description: 'Le o refresh token do cookie e renova os cookies de autenticacao.',
+  })
+  @ApiSimpleSuccessResponse('Tokens renovados com sucesso.')
+  @ApiErrorResponse(401, 'Refresh token ausente, invalido ou expirado.', {
+    statusCode: 401,
+    message: 'Refresh token inválido ou expirado.',
+    error: 'Unauthorized',
+  })
   async refresh(
     @Req() req: { headers?: { cookie?: string } },
     @Res({ passthrough: true }) response: CookieResponse,
@@ -67,6 +95,17 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
+  @ApiCookieAccessAuth()
+  @ApiOperation({
+    summary: 'Realiza logout',
+    description: 'Invalida o refresh token persistido e remove os cookies de autenticacao.',
+  })
+  @ApiSimpleSuccessResponse('Logout realizado com sucesso.')
+  @ApiErrorResponse(401, 'Token ausente ou invalido.', {
+    statusCode: 401,
+    message: 'Token ausente ou inválido.',
+    error: 'Unauthorized',
+  })
   async logout(
     @Req() req: { user: { sub: string } },
     @Res({ passthrough: true }) response: CookieResponse,

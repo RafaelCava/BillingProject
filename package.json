@@ -9,6 +9,7 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/swagger": "^11.2.0",
     "axios": "^1.6.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
@@ -52,7 +53,8 @@
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "swagger-ui-express": "^5.0.1"
   },
   "workspaces": [
     "apps/*",

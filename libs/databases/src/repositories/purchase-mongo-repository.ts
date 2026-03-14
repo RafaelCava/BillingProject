@@ -11,6 +11,18 @@ type PurchaseScope = {
 @Injectable()
 export class PurchaseMongoRepository {
   private readonly logger = new Logger(PurchaseMongoRepository.name);
+  private readonly accountPopulate = {
+    path: 'account',
+    select: 'name cnpj -_id',
+  } as const;
+  private readonly userPopulate = {
+    path: 'user',
+    select: 'name email -_id',
+  } as const;
+  private readonly tagsPopulate = {
+    path: 'tagIds',
+    select: 'name color -_id',
+  } as const;
 
   constructor(@InjectModel(Purchase.name, 'billing') private purchaseModel: Model<Purchase>) {}
 
@@ -46,7 +58,14 @@ export class PurchaseMongoRepository {
       scope,
     });
 
-    const purchases = await this.purchaseModel.find(scope).sort({ purchaseDate: -1 }).lean().exec();
+    const purchases = await this.purchaseModel
+      .find(scope)
+      .populate(this.accountPopulate)
+      .populate(this.userPopulate)
+      .populate(this.tagsPopulate)
+      .sort({ purchaseDate: -1 })
+      .lean()
+      .exec();
 
     this.logger.debug({
       module: PurchaseMongoRepository.name,
@@ -68,7 +87,13 @@ export class PurchaseMongoRepository {
       scope,
     });
 
-    const purchase = await this.purchaseModel.findOne({ _id: purchaseId, ...scope }).lean().exec();
+    const purchase = await this.purchaseModel
+      .findOne({ _id: purchaseId, ...scope })
+      .populate(this.accountPopulate)
+      .populate(this.userPopulate)
+      .populate(this.tagsPopulate)
+      .lean()
+      .exec();
 
     this.logger.debug({
       module: PurchaseMongoRepository.name,
