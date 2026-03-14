@@ -1,5 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, Query, UseGuards } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { UserMongoRepository } from '@billing-management/databases';
 import { CreateUserDto } from './dtos/createUserDto';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -11,22 +10,15 @@ export class UserController {
   private readonly logger = new Logger(UserController.name);
 
   constructor(
-    private readonly appService: AppService,
     private readonly userRepository: UserMongoRepository
   ) {}
-
-  @Get()
-  getData() {
-    this.logger.debug({ module: UserController.name, action: 'getData', phase: 'success' });
-    return this.appService.getData();
-  }
 
   @Get('/user')
   @UseGuards(JwtAuthGuard)
   @Roles('admin', 'user')
-  async getUser(@Query('email') email: string) {
+  async getUser(@Query('email') email: string, @Req() req: { user: { sub: string; accountId: string } }) {
     this.logger.debug({ module: UserController.name, action: 'getUser', phase: 'start', email });
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findByEmail(email, req.user.accountId);
     this.logger.debug({
       module: UserController.name,
       action: 'getUser',
@@ -35,6 +27,32 @@ export class UserController {
       found: Boolean(user),
     });
     return user
+  }
+
+  @Get('/users')
+  @UseGuards(JwtAuthGuard)
+  @Roles('admin')
+  async listUsersByAccount(@Req() req: { user: { sub: string; accountId: string } }) {
+    const accountId = req.user.accountId;
+    this.logger.debug({
+      module: UserController.name,
+      action: 'listUsersByAccount',
+      phase: 'start',
+      accountId,
+      requesterUserId: req.user.sub,
+    });
+
+    const users = await this.userRepository.findByAccountId(accountId);
+
+    this.logger.debug({
+      module: UserController.name,
+      action: 'listUsersByAccount',
+      phase: 'success',
+      accountId,
+      count: users.length,
+    });
+
+    return { users };
   }
 
   @Post('/user')
@@ -53,6 +71,7 @@ export class UserController {
         role: createUserDto.role ?? 'user',
         password: passwordHash,
       });
+      const safeUser = this.userRepository.sanitizeUser(user);
       this.logger.debug({
         module: UserController.name,
         action: 'createUser',
@@ -60,7 +79,7 @@ export class UserController {
         email: createUserDto.email,
         hasUser: Boolean(user),
       });
-      return { user }
+      return { user: safeUser }
     } catch (error: unknown) {
       const errorDetails = error as { message?: string; stack?: string; code?: string | number };
       this.logger.error(

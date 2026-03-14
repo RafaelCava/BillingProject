@@ -15,6 +15,7 @@ type JwtPayload = {
   sub: string;
   email: string;
   role: string;
+  accountId: string;
 };
 
 @Injectable()
@@ -66,6 +67,7 @@ export class JwtAuthGuard implements CanActivate {
           phase: 'validated',
           userId: payload.sub,
           role: payload.role,
+          accountId: payload.accountId,
           path: request.url,
         }
       );
@@ -92,6 +94,7 @@ export class JwtAuthGuard implements CanActivate {
           action: 'canActivate',
           phase: 'success',
           userId: payload.sub,
+          accountId: payload.accountId,
           path: request.url,
         }
       );

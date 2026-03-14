@@ -3,13 +3,13 @@
  * This is only a minimal backend to get started.
  */
 
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'start' }, 'Bootstrap');
   const app = await NestFactory.create(AppModule);
+  Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'start' }, 'Bootstrap');
   const allowedOrigins = (process.env.FRONTEND_URLS || 'http://localhost:4200,http://localhost:3001')
     .split(',')
     .map((origin) => origin.trim())
@@ -37,12 +37,21 @@ async function bootstrap() {
     credentials: true,
   });
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  Logger.debug({ module: 'Bootstrap', action: 'validationPipe', phase: 'configured' }, 'Bootstrap');
+
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   const port = process.env.PORT || 3000;
   Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'configured', port, globalPrefix }, 'Bootstrap');
   await app.listen(port);
-  Logger.log({ module: 'Bootstrap', action: 'bootstrap', phase: 'success', port, globalPrefix }, 'Bootstrap');
+  Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'success', port, globalPrefix }, 'Bootstrap');
 }
 
 bootstrap();

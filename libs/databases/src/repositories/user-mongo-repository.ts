@@ -8,6 +8,8 @@ type UserAuthDocument = User & {
   refreshTokenHash?: string;
 };
 
+type UserRecord = Record<string, unknown>;
+
 @Injectable()
 export class UserMongoRepository {
   private readonly logger = new Logger(UserMongoRepository.name);
@@ -34,17 +36,23 @@ export class UserMongoRepository {
     return savedUser;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    this.logger.debug({ module: UserMongoRepository.name, action: 'findByEmail', phase: 'start', email });
-    const user = await this.userModel.findOne({ email }).lean().exec();
+  sanitizeUser(user: unknown): User {
+    const rawUser = { ...(user as UserRecord) };
+    const userDoc = rawUser._doc as UserRecord | undefined;
+    const safeUser = userDoc ? { ...userDoc } : rawUser;
+    delete safeUser.password;
+    delete safeUser.refreshTokenHash;
+    return safeUser as unknown as User;
+  }
+
+  async findByEmail(email: string, accountId: string): Promise<User | null> {
+    this.logger.debug({ module: UserMongoRepository.name, action: 'findByEmail', phase: 'start', email, accountId });
+    const user = await this.userModel.findOne({ email: new RegExp(email), account: accountId }).lean().exec();
     if (user) {
-      const safeUser = { ...(user as unknown as Record<string, unknown>) };
-      delete safeUser.password;
-      delete safeUser.refreshTokenHash;
-      this.logger.debug({ module: UserMongoRepository.name, action: 'findByEmail', phase: 'success', email, found: true });
-      return safeUser as unknown as User;
+      this.logger.debug({ module: UserMongoRepository.name, action: 'findByEmail', phase: 'success', email, accountId, found: true });
+      return this.sanitizeUser(user);
     }
-    this.logger.debug({ module: UserMongoRepository.name, action: 'findByEmail', phase: 'success', email, found: false });
+    this.logger.debug({ module: UserMongoRepository.name, action: 'findByEmail', phase: 'success', email, accountId, found: false });
     return null;
   }
 
@@ -72,6 +80,25 @@ export class UserMongoRepository {
       found: Boolean(user),
     });
     return user as UserAuthDocument | null;
+  }
+
+  async findByAccountId(accountId: string): Promise<User[]> {
+    this.logger.debug({
+      module: UserMongoRepository.name,
+      action: 'findByAccountId',
+      phase: 'start',
+      accountId,
+    });
+    const users = await this.userModel.find({ account: accountId }).lean().exec();
+    const safeUsers = users.map((user) => this.sanitizeUser(user));
+    this.logger.debug({
+      module: UserMongoRepository.name,
+      action: 'findByAccountId',
+      phase: 'success',
+      accountId,
+      count: safeUsers.length,
+    });
+    return safeUsers;
   }
 
   async updateRefreshTokenHash(userId: string, refreshTokenHash: string | null): Promise<void> {

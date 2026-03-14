@@ -7,6 +7,7 @@ type JwtPayload = {
   sub: string;
   email: string;
   role: string;
+  accountId: string;
 };
 
 @Injectable()
@@ -49,6 +50,7 @@ export class AuthService {
       sub: String(user._id),
       email: user.email,
       role: user.role,
+      accountId: user.account,
     });
 
     const refreshTokenHash = await hash(tokens.refreshToken, 10);
@@ -128,6 +130,7 @@ export class AuthService {
       sub: String(user._id),
       email: user.email,
       role: user.role,
+      accountId: user.account,
     });
 
     const newRefreshTokenHash = await hash(tokens.refreshToken, 10);
@@ -163,6 +166,7 @@ export class AuthService {
       phase: 'success',
       userId: payload.sub,
       role: payload.role,
+      accountId: payload.accountId,
     });
 
     return {
