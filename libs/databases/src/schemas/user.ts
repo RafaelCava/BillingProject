@@ -10,30 +10,33 @@ export class User {
     required: true,
     maxLength: 50,
   })
-  name: string;
+  name!: string;
 
   @Prop({
     required: true,
     unique: true,
     maxLength: 100,
   })
-  email: string;
+  email!: string;
 
   @Prop({
     maxLength: 100,
     required: true,
   })
-  password: string;
+  password!: string;
 
   @Prop({required: true, ref: 'Account', type: SchemaTypes.ObjectId})
-  account: string;
+  account!: string;
 
   @Prop({required: true, enum: ['admin', 'user'], default: 'user'})
-  role: string;
+  role!: string;
 
-  createdAt: Date;
+  @Prop({ required: false, maxLength: 255 })
+  refreshTokenHash?: string;
 
-  updatedAt: Date;
+  createdAt!: Date;
+
+  updatedAt!: Date;
 }
 
 
