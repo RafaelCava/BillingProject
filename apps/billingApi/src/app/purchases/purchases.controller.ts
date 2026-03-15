@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { CreatePurchaseDto } from './dtos/create-purchase.dto';
 import { UpdatePurchaseDto } from './dtos/update-purchase.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   ApiCookieAccessAuth,
   ApiErrorResponse,
@@ -84,8 +85,11 @@ export class PurchasesController {
     summary: 'Lista compras',
     description: 'Lista compras do account do token. Para user comum, retorna apenas compras criadas por ele.',
   })
+  @ApiQuery({ name: 'page', required: false, example: 1, description: 'Número da página para paginação (padrão: 1)' })
+  @ApiQuery({ name: 'limit', required: false, example: 20, description: 'Número de itens por página para paginação (padrão: 20)' })
+  @ApiQuery({ name: 'name', required: false, description: 'Filtro para buscar compras por nome (busca parcial, case-insensitive)' })
   @ApiSuccessResponse(200, 'Compras listadas com sucesso.', { purchases: [PURCHASE_EXAMPLE] })
-  async findAll(@Req() req: { user: RequestUser }) {
+  async findAll(@Req() req: { user: RequestUser }, @Query() query: { page?: number; limit?: number; name?: string }) {
     this.logger.debug({
       module: PurchasesController.name,
       action: 'findAll',
@@ -95,7 +99,7 @@ export class PurchasesController {
       role: req.user.role,
     });
 
-    const result = await this.purchasesService.findAll(req.user);
+    const result = await this.purchasesService.findAll(req.user, query);
 
     this.logger.debug({
       module: PurchasesController.name,

@@ -13,12 +13,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreatePurchaseDto {
   @ApiProperty({ example: '2026-03-10T00:00:00.000Z', description: 'Data em que a compra foi realizada' })
   @IsDateString()
-  purchaseDate: string;
+  purchaseDate!: string;
 
   @ApiProperty({ example: 249.9, description: 'Valor total da compra' })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  totalAmount: number;
+  totalAmount!: number;
 
   @ApiPropertyOptional({ example: 3, description: 'Quantidade de parcelas da compra. Quando omitido, assume 1' })
   @IsOptional()
@@ -36,4 +36,8 @@ export class CreatePurchaseDto {
   @IsMongoId({ each: true })
   @IsNotEmpty({ each: true })
   tagIds?: string[];
+
+  @ApiProperty({ example: 'Compra de software', description: 'Nome da compra' })
+  @IsNotEmpty()
+  name!: string;
 }

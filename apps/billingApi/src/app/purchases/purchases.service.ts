@@ -48,6 +48,7 @@ export class PurchasesService {
       installmentsEndDate,
       dueDate,
       tagIds: createPurchaseDto.tagIds ?? [],
+      name: createPurchaseDto.name,
     });
 
     this.logger.debug({
@@ -62,7 +63,7 @@ export class PurchasesService {
     return { purchase };
   }
 
-  async findAll(requestUser: RequestUser) {
+  async findAll(requestUser: RequestUser, query: { page?: number; limit?: number; name?: string }) {
     const scope = this.buildScope(requestUser);
     this.logger.debug({
       module: PurchasesService.name,
@@ -71,7 +72,7 @@ export class PurchasesService {
       scope,
     });
 
-    const purchases = await this.purchaseRepository.findAllByScope(scope);
+    const purchases = await this.purchaseRepository.findAllByScope(scope, { limit: query.limit ?? 20, page: query.page ?? 1, name: query.name });
 
     this.logger.debug({
       module: PurchasesService.name,

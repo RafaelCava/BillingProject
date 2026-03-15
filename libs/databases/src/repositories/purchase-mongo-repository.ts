@@ -8,6 +8,11 @@ type PurchaseScope = {
   user?: string;
 };
 
+type FindAllFilter = {
+  page: number,
+  limit: number,
+  name?: string,
+}
 @Injectable()
 export class PurchaseMongoRepository {
   private readonly logger = new Logger(PurchaseMongoRepository.name);
@@ -50,7 +55,7 @@ export class PurchaseMongoRepository {
     return savedPurchase;
   }
 
-  async findAllByScope(scope: PurchaseScope): Promise<Purchase[]> {
+  async findAllByScope(scope: PurchaseScope, filter: FindAllFilter): Promise<Purchase[]> {
     this.logger.debug({
       module: PurchaseMongoRepository.name,
       action: 'findAllByScope',
@@ -58,12 +63,17 @@ export class PurchaseMongoRepository {
       scope,
     });
 
+    const filterConditions: Record<string, unknown> = { ...scope };
+    if (filter.name) {
+      filterConditions.name = { $regex: filter.name, $options: 'i' };
+    }
     const purchases = await this.purchaseModel
-      .find(scope)
+      .find(filterConditions)
+      .skip((filter.page - 1) * filter.limit)
+      .limit(filter.limit)
       .populate(this.accountPopulate)
       .populate(this.userPopulate)
       .populate(this.tagsPopulate)
-      .sort({ purchaseDate: -1 })
       .lean()
       .exec();
 

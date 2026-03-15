@@ -29,6 +29,9 @@ export class Purchase {
   @Prop({ required: false, type: [{ type: SchemaTypes.ObjectId, ref: 'Tag' }], default: [] })
   tagIds!: string[];
 
+  @Prop({ required: true })
+  name!: string;
+
   createdAt!: Date;
 
   updatedAt!: Date;
