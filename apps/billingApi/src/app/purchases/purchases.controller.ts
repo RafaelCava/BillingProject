@@ -108,7 +108,7 @@ export class PurchasesController {
       accountId: req.user.accountId,
       userId: req.user.sub,
       role: req.user.role,
-      count: result.purchases.length,
+      count: result.purchases.purchases.length,
     });
 
     return result;

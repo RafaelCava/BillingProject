@@ -79,7 +79,7 @@ export class PurchasesService {
       action: 'findAll',
       phase: 'success',
       scope,
-      count: purchases.length,
+      count: purchases.purchases.length,
     });
 
     return { purchases };

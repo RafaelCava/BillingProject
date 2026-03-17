@@ -55,7 +55,7 @@ export class PurchaseMongoRepository {
     return savedPurchase;
   }
 
-  async findAllByScope(scope: PurchaseScope, filter: FindAllFilter): Promise<Purchase[]> {
+  async findAllByScope(scope: PurchaseScope, filter: FindAllFilter): Promise<{ purchases: Purchase[], totalCount: number }> {
     this.logger.debug({
       module: PurchaseMongoRepository.name,
       action: 'findAllByScope',
@@ -67,7 +67,8 @@ export class PurchaseMongoRepository {
     if (filter.name) {
       filterConditions.name = { $regex: filter.name, $options: 'i' };
     }
-    const purchases = await this.purchaseModel
+    const [purchases, totalCount] = await Promise.all([
+      this.purchaseModel
       .find(filterConditions)
       .skip((filter.page - 1) * filter.limit)
       .limit(filter.limit)
@@ -75,7 +76,9 @@ export class PurchaseMongoRepository {
       .populate(this.userPopulate)
       .populate(this.tagsPopulate)
       .lean()
-      .exec();
+      .exec(),
+      this.purchaseModel.countDocuments(filterConditions).exec(),
+    ])
 
     this.logger.debug({
       module: PurchaseMongoRepository.name,
@@ -85,7 +88,7 @@ export class PurchaseMongoRepository {
       count: purchases.length,
     });
 
-    return purchases as Purchase[];
+    return { purchases, totalCount };
   }
 
   async findByIdAndScope(purchaseId: string, scope: PurchaseScope): Promise<Purchase | null> {
