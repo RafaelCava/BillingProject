@@ -53,6 +53,12 @@ Os pontos abaixo precisam estar configurados para o fluxo completo funcionar cor
 - `JWT_REFRESH_SECRET`: segredo do refresh token
 - `FRONTEND_URLS`: lista de origens permitidas no CORS, separadas por vírgula
 - `NODE_ENV`: afeta o comportamento seguro dos cookies
+- `OTEL_METRICS_ENABLED`: habilita/desabilita exportação de métricas (`true` por padrão)
+- `OTEL_SERVICE_NAME`: nome do serviço enviado nas métricas (padrão `billing-api`)
+- `OTEL_SERVICE_VERSION`: versão do serviço nas métricas (padrão `0.0.1`)
+- `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`: endpoint OTLP HTTP completo para métricas (ex.: `http://otel-agent:4318/v1/metrics`)
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: endpoint base OTLP HTTP (fallback quando `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` não estiver definido)
+- `OTEL_METRIC_EXPORT_INTERVAL`: intervalo de exportação em ms (padrão `10000`)
 
 Exemplo de conexão usada com Docker local:
 

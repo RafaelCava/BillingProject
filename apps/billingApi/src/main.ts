@@ -7,8 +7,11 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { setupSwagger } from './app/swagger/swagger.config';
+import { HttpMetricsInterceptor } from './app/telemetry/http-metrics.interceptor';
+import { setupOpenTelemetryMetrics } from './app/telemetry/metrics';
 
 async function bootstrap() {
+  const telemetry = setupOpenTelemetryMetrics();
   const app = await NestFactory.create(AppModule);
   Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'start' }, 'Bootstrap');
   const allowedOrigins = (process.env.FRONTEND_URLS || 'http://localhost:8080,http://localhost:3000,http://localhost:3001')
@@ -45,6 +48,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.useGlobalInterceptors(new HttpMetricsInterceptor());
   Logger.debug({ module: 'Bootstrap', action: 'validationPipe', phase: 'configured' }, 'Bootstrap');
 
   const globalPrefix = 'api';
@@ -52,6 +56,22 @@ async function bootstrap() {
   setupSwagger(app);
   const port = process.env.PORT || 3000;
   Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'configured', port, globalPrefix }, 'Bootstrap');
+
+  const gracefulShutdown = async (signal: string) => {
+    Logger.log({ module: 'Bootstrap', action: 'shutdown', signal }, 'Bootstrap');
+    await app.close();
+    await telemetry.shutdown();
+    process.exit(0);
+  };
+
+  process.once('SIGINT', () => {
+    void gracefulShutdown('SIGINT');
+  });
+
+  process.once('SIGTERM', () => {
+    void gracefulShutdown('SIGTERM');
+  });
+
   await app.listen(port);
   Logger.debug({ module: 'Bootstrap', action: 'bootstrap', phase: 'success', port, globalPrefix }, 'Bootstrap');
 }
