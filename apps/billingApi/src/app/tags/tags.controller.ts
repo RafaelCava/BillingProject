@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { UpdateTagDto } from './dtos/update-tag.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   ApiCookieAccessAuth,
   ApiErrorResponse,
@@ -26,6 +27,7 @@ import {
   ApiValidationErrorResponse,
 } from '../swagger/swagger.decorators';
 import { TAG_EXAMPLE, TAG_UPDATED_EXAMPLE } from '../swagger/swagger.examples';
+import { ListTagsDto } from './dtos/list-tags.dto';
 
 type RequestUser = {
   sub: string;
@@ -89,8 +91,10 @@ export class TagsController {
     summary: 'Lista tags da conta',
     description: 'Lista todas as tags vinculadas ao accountId do token autenticado.',
   })
+  @ApiQuery({ name: 'page', required: false, example: 1, description: 'Numero da pagina para paginacao (padrao: 1)' })
+  @ApiQuery({ name: 'limit', required: false, example: 20, description: 'Numero de itens por pagina para paginacao (padrao: 20)' })
   @ApiSuccessResponse(200, 'Tags listadas com sucesso.', { tags: [TAG_EXAMPLE] })
-  async findAll(@Req() req: { user: RequestUser }) {
+  async findAll(@Req() req: { user: RequestUser }, @Query() query: ListTagsDto) {
     this.logger.debug({
       module: TagsController.name,
       action: 'findAll',
@@ -98,9 +102,11 @@ export class TagsController {
       accountId: req.user.accountId,
       userId: req.user.sub,
       role: req.user.role,
+      page: query.page,
+      limit: query.limit,
     });
 
-    const result = await this.tagsService.findAll(req.user);
+    const result = await this.tagsService.findAll(req.user, query);
 
     this.logger.debug({
       module: TagsController.name,
@@ -108,6 +114,8 @@ export class TagsController {
       phase: 'success',
       accountId: req.user.accountId,
       count: result.tags.length,
+      page: result.page,
+      limit: result.limit,
     });
 
     return result;

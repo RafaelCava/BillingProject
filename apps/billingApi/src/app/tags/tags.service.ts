@@ -7,6 +7,7 @@ import {
 import { TagMongoRepository } from '@billing-management/databases';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { UpdateTagDto } from './dtos/update-tag.dto';
+import { ListTagsDto } from './dtos/list-tags.dto';
 
 type RequestUser = {
   sub: string;
@@ -59,7 +60,10 @@ export class TagsService {
     return { tag };
   }
 
-  async findAll(requestUser: RequestUser) {
+  async findAll(requestUser: RequestUser, query: ListTagsDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+
     this.logger.debug({
       module: TagsService.name,
       action: 'findAll',
@@ -67,9 +71,12 @@ export class TagsService {
       accountId: requestUser.accountId,
       userId: requestUser.sub,
       role: requestUser.role,
+      page,
+      limit,
     });
 
-    const tags = await this.tagRepository.findAllByAccount(requestUser.accountId);
+    const { tags, totalCount } = await this.tagRepository.findAllByAccount(requestUser.accountId, { page, limit });
+    const totalPages = totalCount === 0 ? 0 : Math.ceil(totalCount / limit);
 
     this.logger.debug({
       module: TagsService.name,
@@ -77,9 +84,12 @@ export class TagsService {
       phase: 'success',
       accountId: requestUser.accountId,
       count: tags.length,
+      totalCount,
+      page,
+      limit,
     });
 
-    return { tags };
+    return { tags, totalCount, page, limit, totalPages };
   }
 
   async findOne(tagId: string, requestUser: RequestUser) {

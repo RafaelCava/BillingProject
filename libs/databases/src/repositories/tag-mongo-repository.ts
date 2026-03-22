@@ -3,6 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Tag } from '../schemas/tag';
 
+type FindAllByAccountFilters = {
+  page: number;
+  limit: number;
+};
+
 @Injectable()
 export class TagMongoRepository {
   private readonly logger = new Logger(TagMongoRepository.name);
@@ -56,15 +61,25 @@ export class TagMongoRepository {
     return tag as Tag | null;
   }
 
-  async findAllByAccount(accountId: string): Promise<Tag[]> {
+  async findAllByAccount(accountId: string, filters: FindAllByAccountFilters): Promise<{ tags: Tag[]; totalCount: number }> {
     this.logger.debug({
       module: TagMongoRepository.name,
       action: 'findAllByAccount',
       phase: 'start',
       accountId,
+      filters,
     });
 
-    const tags = await this.tagModel.find({ account: accountId }).sort({ createdAt: -1 }).lean().exec();
+    const [tags, totalCount] = await Promise.all([
+      this.tagModel
+        .find({ account: accountId })
+        .sort({ createdAt: -1, _id: -1 })
+        .skip((filters.page - 1) * filters.limit)
+        .limit(filters.limit)
+        .lean()
+        .exec(),
+      this.tagModel.countDocuments({ account: accountId }).exec(),
+    ]);
 
     this.logger.debug({
       module: TagMongoRepository.name,
@@ -72,9 +87,11 @@ export class TagMongoRepository {
       phase: 'success',
       accountId,
       count: tags.length,
+      totalCount,
+      filters,
     });
 
-    return tags as Tag[];
+    return { tags: tags as Tag[], totalCount };
   }
 
   async findByIdAndAccount(tagId: string, accountId: string): Promise<Tag | null> {
