@@ -6,6 +6,7 @@ import { Tag } from '../schemas/tag';
 type FindAllByAccountFilters = {
   page: number;
   limit: number;
+  name?: string;
 };
 
 @Injectable()
@@ -70,15 +71,20 @@ export class TagMongoRepository {
       filters,
     });
 
+    const query: Record<string, unknown> = { account: accountId };
+    if (filters.name) {
+      query.name = { $regex: filters.name, $options: 'i' };
+    }
+
     const [tags, totalCount] = await Promise.all([
       this.tagModel
-        .find({ account: accountId })
+        .find(query)
         .sort({ createdAt: -1, _id: -1 })
         .skip((filters.page - 1) * filters.limit)
         .limit(filters.limit)
         .lean()
         .exec(),
-      this.tagModel.countDocuments({ account: accountId }).exec(),
+      this.tagModel.countDocuments(query).exec(),
     ]);
 
     this.logger.debug({

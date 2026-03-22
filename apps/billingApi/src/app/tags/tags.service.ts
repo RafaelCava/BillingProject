@@ -63,6 +63,7 @@ export class TagsService {
   async findAll(requestUser: RequestUser, query: ListTagsDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
+    const name = query.name;
 
     this.logger.debug({
       module: TagsService.name,
@@ -73,9 +74,14 @@ export class TagsService {
       role: requestUser.role,
       page,
       limit,
+      name,
     });
 
-    const { tags, totalCount } = await this.tagRepository.findAllByAccount(requestUser.accountId, { page, limit });
+    const { tags, totalCount } = await this.tagRepository.findAllByAccount(requestUser.accountId, {
+      page,
+      limit,
+      name,
+    });
     const totalPages = totalCount === 0 ? 0 : Math.ceil(totalCount / limit);
 
     this.logger.debug({
@@ -87,6 +93,7 @@ export class TagsService {
       totalCount,
       page,
       limit,
+      name,
     });
 
     return { tags, totalCount, page, limit, totalPages };

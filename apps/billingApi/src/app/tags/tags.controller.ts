@@ -93,6 +93,7 @@ export class TagsController {
   })
   @ApiQuery({ name: 'page', required: false, example: 1, description: 'Numero da pagina para paginacao (padrao: 1)' })
   @ApiQuery({ name: 'limit', required: false, example: 20, description: 'Numero de itens por pagina para paginacao (padrao: 20)' })
+  @ApiQuery({ name: 'name', required: false, description: 'Filtro para buscar tags por nome (busca parcial, case-insensitive)' })
   @ApiSuccessResponse(200, 'Tags listadas com sucesso.', { tags: [TAG_EXAMPLE] })
   async findAll(@Req() req: { user: RequestUser }, @Query() query: ListTagsDto) {
     this.logger.debug({
@@ -104,6 +105,7 @@ export class TagsController {
       role: req.user.role,
       page: query.page,
       limit: query.limit,
+      name: query.name,
     });
 
     const result = await this.tagsService.findAll(req.user, query);

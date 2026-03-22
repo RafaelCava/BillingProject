@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class ListTagsDto {
   @ApiPropertyOptional({ example: 1, description: 'Numero da pagina para paginacao (padrao: 1)' })
@@ -17,4 +17,13 @@ export class ListTagsDto {
   @Min(1)
   @Max(100)
   limit?: number;
+
+  @ApiPropertyOptional({
+    example: 'Ali',
+    description: 'Filtra tags por nome (busca parcial, case-insensitive)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  name?: string;
 }
