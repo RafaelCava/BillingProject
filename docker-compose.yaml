@@ -30,8 +30,7 @@ services:
       NX_DAEMON: true
       CHOKIDAR_USEPOLLING: true
       CHOKIDAR_INTERVAL: 100
-      # OpenTelemetry Metrics
-      OTEL_METRICS_ENABLED: "true"
+      OTEL_METRICS_ENABLED: "false"
       OTEL_SERVICE_NAME: "billing-api"
       OTEL_SERVICE_VERSION: "0.0.1"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
@@ -42,53 +41,53 @@ services:
       - host.docker.internal:host-gateway
     depends_on:
       - db_mongo
-      - otel-collector
+      # - otel-collector
     networks:
       - billing_network
-  otel-collector:
-    image: otel/opentelemetry-collector:latest
-    container_name: otel-collector
-    ports:
-      - 4318:4318
-      - 8889:8889
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    environment:
-      GOGC: 80
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    networks:
-      - billing_network
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    user: "0:0"
-    ports:
-      - 9090:9090
-    volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
-      - ./tmp/prometheus:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    networks:
-      - billing_network
-    depends_on:
-      - otel-collector
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    user: "0:0"
-    ports:
-      - 3001:3000
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_PATHS_DATA: /var/lib/grafana
-    volumes:
-      - ./tmp/grafana:/var/lib/grafana
-    networks:
-      - billing_network
-    depends_on:
-      - prometheus
+  # otel-collector:
+  #   image: otel/opentelemetry-collector:latest
+  #   container_name: otel-collector
+  #   ports:
+  #     - 4318:4318
+  #     - 8889:8889
+  #   volumes:
+  #     - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+  #   environment:
+  #     GOGC: 80
+  #   command: ["--config=/etc/otel-collector-config.yaml"]
+  #   extra_hosts:
+  #     - host.docker.internal:host-gateway
+  #   networks:
+  #     - billing_network
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   user: "0:0"
+  #   ports:
+  #     - 9090:9090
+  #   volumes:
+  #     - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+  #     - ./tmp/prometheus:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #   networks:
+  #     - billing_network
+  #   depends_on:
+  #     - otel-collector
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   user: "0:0"
+  #   ports:
+  #     - 3001:3000
+  #   environment:
+  #     GF_SECURITY_ADMIN_PASSWORD: admin
+  #     GF_USERS_ALLOW_SIGN_UP: "false"
+  #     GF_PATHS_DATA: /var/lib/grafana
+  #   volumes:
+  #     - ./tmp/grafana:/var/lib/grafana
+  #   networks:
+  #     - billing_network
+  #   depends_on:
+  #     - prometheus
