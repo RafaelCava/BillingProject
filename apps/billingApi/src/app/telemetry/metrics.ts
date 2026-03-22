@@ -84,7 +84,6 @@ export function setupOpenTelemetryMetrics(): MetricsSetup {
   return {
     enabled: true,
     shutdown: async () => {
-      hostMetrics.disable();
       await meterProvider.shutdown();
       Logger.log({ module: 'OpenTelemetry', action: 'metrics', phase: 'shutdown' }, 'OpenTelemetry');
     },
