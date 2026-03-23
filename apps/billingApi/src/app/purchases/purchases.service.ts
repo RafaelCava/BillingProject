@@ -6,6 +6,7 @@ import {
 import { PurchaseMongoRepository } from '@billing-management/databases';
 import { CreatePurchaseDto } from './dtos/create-purchase.dto';
 import { UpdatePurchaseDto } from './dtos/update-purchase.dto';
+import { BillsService } from '../bills/bills.service';
 
 type RequestUser = {
   sub: string;
@@ -22,7 +23,7 @@ type PurchaseScope = {
 export class PurchasesService {
   private readonly logger = new Logger(PurchasesService.name);
 
-  constructor(private readonly purchaseRepository: PurchaseMongoRepository) {}
+  constructor(private readonly purchaseRepository: PurchaseMongoRepository, private readonly billsService: BillsService) {}
 
   async create(createPurchaseDto: CreatePurchaseDto, requestUser: RequestUser) {
     const installmentsCount = createPurchaseDto.installmentsCount ?? 1;
@@ -58,6 +59,35 @@ export class PurchasesService {
       accountId: requestUser.accountId,
       userId: requestUser.sub,
       purchaseId: String((purchase as unknown as { _id?: unknown })._id),
+    });
+
+    this.logger.debug({
+      module: PurchasesService.name,
+      action: 'create',
+      phase: 'creating_bills',
+      accountId: requestUser.accountId,
+      userId: requestUser.sub,
+      purchaseId: String((purchase as unknown as { _id?: unknown })._id),
+      installmentsCount,
+    })
+
+    const bills = await this.billsService.create({
+      accountId: requestUser.accountId,
+      purchaseId: String((purchase as unknown as { _id?: unknown })._id),
+      name: createPurchaseDto.name,
+      totalAmount: createPurchaseDto.totalAmount,
+      purchaseDate,
+      installmentCount: installmentsCount,
+    });
+
+    this.logger.debug({
+      module: PurchasesService.name,
+      action: 'create',
+      phase: 'bills_created',
+      accountId: requestUser.accountId,
+      userId: requestUser.sub,
+      purchaseId: String((purchase as unknown as { _id?: unknown })._id),
+      billsCreated: Array.isArray(bills) ? bills.length : 1,
     });
 
     return { purchase };
